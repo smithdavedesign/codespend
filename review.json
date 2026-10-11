@@ -1,0 +1,66 @@
+{
+  "verdict": "pass",
+  "score": 3,
+  "summary": "A cross-tool AI coding spend alerter for engineering leads: a crowded space where vendors already ship budgets and caps, and the buyer (50–500-engineer orgs) is unreachable for a solo $0 test. Demand evidence is two GitHub billing complaints, not buyers, and David's own pr-receipt idea already covers the sharper branch-level wedge.",
+  "forcingQuestions": {
+    "demand": {
+      "score": 2,
+      "evidence": "RESEARCH.md cites two Claude Code GitHub issues (#81703, #62338) about disputed bills. These show the pain exists, but they are complaints about billing, not people asking for a third-party tool. 'Evidence they pay' is competitors having waitlists/early access, which is not proof anyone pays. No named buyer, no money, no behavior."
+    },
+    "statusQuo": {
+      "score": 4,
+      "evidence": "Status quo is vendor consoles (Anthropic Console/Admin usage report, Cursor team spend limits, Copilot metrics, OpenAI usage and hard budget limits) plus spreadsheets. These already cover alerts and caps per vendor. The unified view is a convenience, and most teams use one or two tools, so the cross-tool pain is weaker than the PRD implies."
+    },
+    "specificity": {
+      "score": 2,
+      "evidence": "Target is 'engineering leads, CTOs, tech ops managers at mid-size companies'. That is a category, not a person. No name, no consequence (nobody gets fired over a $700 tooling bill). The secondary user (individual devs) has little budget and tools like ccusage already serve them free."
+    },
+    "wedge": {
+      "score": 4,
+      "evidence": "The M1 wedge (Claude API usage plus budget email) is small but is exactly what Anthropic's own console limits and free tools already do. The differentiator named in the PRD (task/branch attribution) is pushed to M3 and is the hard part. The 8-bullet MVP is a platform, not a wedge."
+    },
+    "futureFit": {
+      "score": 3,
+      "evidence": "Vendors are steadily adding native spend controls and admin analytics, which commoditises a read-only aggregator. Pricing moving from seats to metered tokens helps the category, but the winner is the vendor or an agent-level governor, not a dashboard on top of billing APIs."
+    }
+  },
+  "premises": [
+    "Teams are hurt by surprise AI coding bills. Weakly supported: two anecdotal GitHub issues, and one is a billing misattribution bug rather than a visibility gap.",
+    "Vendor-native budgets and alerts are insufficient. Not supported: the research never checks what the vendor consoles offer, and the competitor table shows several tools already filling the gap.",
+    "Cross-tool aggregation is a must-have. Unverified: most teams run one or two agents.",
+    "Mid-size engineering leaders will hand a third party admin API keys. Doubtful: security review is a heavy lift, and admin/org keys are the sensitive ones.",
+    "Branch/task attribution is feasible from billing APIs. Not supported: billing APIs report by key/user/day, not by branch (the research's own open question)."
+  ],
+  "alternatives": [
+    "Extend David's existing pr-receipt idea (local session logs to per-branch cost receipt on the PR). It delivers the branch attribution this PRD only promises in M3, needs no customer API keys, runs locally at $0 and has a viral surface (receipts in PRs). Recommended over CodeSpend.",
+    "Minimal: a local CLI/GitHub Action that reads Claude Code session logs on disk and warns when a daily or monthly threshold is crossed (a ccusage-style tool with alerts). One weekend, no key custody, and can be shared on r/ClaudeAI to test pull.",
+    "Ideal architecture (rejected for now): a multi-tenant SaaS that stores admin keys for four vendors and reconciles billing. Large, security-sensitive and unreachable for a solo $0 test."
+  ],
+  "wedge": "Local-only: read Claude Code logs, show spend per branch, and send one threshold alert. This is effectively pr-receipt, not CodeSpend.",
+  "feasibility": {
+    "m1Weekend": true,
+    "zeroCost": false,
+    "notes": "M1 as written (Claude usage fetch, Postgres, chart, SendGrid email) is buildable in a weekend on Vercel Hobby plus Neon free, but SendGrid and the Anthropic Admin API need an organization account and admin key, so a real end-to-end test is not free for David, and he would hold customer admin keys. The one test that would prove M1: a seeded key returns known usage and the 100% alert fires. That proves plumbing, not demand."
+  },
+  "risks": [
+    "Crowded market: SpendGuard, Agentic SpendGuard, llm-spendguard, MeterCall, ccusage and the vendors' own caps.",
+    "Anthropic/Cursor/OpenAI/GitHub ship native budgets and alerts; the product is a feature in their roadmaps.",
+    "Admin API access is org-level only, so individual devs and small teams, the reachable audience, can't connect.",
+    "Custody of API keys is a security and trust liability for a solo unknown vendor.",
+    "Billing misattribution, the headline pain, is the vendor's bug, and an alert tool cannot fix a wrong invoice.",
+    "Buyer is a mid-size engineering leader: long sales cycle, no cheap channel to reach them in a 2-week test.",
+    "Overlaps David's pr-receipt and dawnlog ideas, so it splits focus."
+  ],
+  "killCriteria": "Not applicable as no demand test is run. If revisited: drop if fewer than 5 named engineering leads confirm they hit a surprise bill in the last quarter and would connect an admin key, or if a vendor ships cross-tool or native budget alerts.",
+  "landing": {
+    "headline": "",
+    "subhead": "",
+    "bullets": [],
+    "cta": "",
+    "audience": ""
+  },
+  "launch": {
+    "channels": [],
+    "post": ""
+  }
+}

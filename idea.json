@@ -1,0 +1,26 @@
+{
+  "title": "CodeSpend — budget alerts and spend visibility for coding agents",
+  "repoName": "codespend",
+  "oneLiner": "For developers and teams using AI coding agents, it tracks usage across Claude, Cursor, Copilot, and OpenAI APIs, provides per-project budgets with alerts, and attributes cost to tasks and branches to prevent surprise bills.",
+  "overlaps": "pr-receipt — this focuses on PR-level token spend attribution; CodeSpend adds cross-tool budgeting, alerts, and project-level visibility",
+  "tags": [
+    "dev-tools",
+    "ai"
+  ],
+  "effort": "Medium",
+  "confidence": "Medium",
+  "sources": [
+    "https://github.com/anthropics/claude-code/issues/81703",
+    "https://github.com/anthropics/claude-code/issues/62338",
+    "https://temperstone.net/coding-spend-guard",
+    "https://platform.claude.com/docs/en/api/admin/analytics/usage",
+    "https://cursor.com/docs/api",
+    "https://docs.github.com/en/rest/copilot/copilot-usage",
+    "https://help.openai.com/en/articles/6614209-how-do-i-check-my-token-usage",
+    "https://evidencedeskai.com/",
+    "https://agenticspendguard.dev/",
+    "https://www.llmspendguard.com/"
+  ],
+  "recordedAt": "2026-10-11T16:12:48.873Z",
+  "slug": "codespend"
+}
