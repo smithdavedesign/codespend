@@ -1,0 +1,29 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>CodeSpend</title>
+<style>body{font:15px system-ui;max-width:640px;margin:2rem auto;padding:0 1rem}input,button{font:inherit;margin:.2rem}</style>
+<h1>CodeSpend — Claude spend</h1>
+<p id="status">Loading…</p>
+<svg id="chart" width="600" height="200" role="img" aria-label="Daily Claude spend"></svg>
+<h2>Setup</h2>
+<form id="key"><input name="apiKey" type="password" placeholder="Anthropic admin API key" required><button>Save key</button></form>
+<form id="budget"><input name="monthlyUsd" type="number" step="0.01" min="0.01" placeholder="Monthly budget $" required>
+<input name="email" type="email" placeholder="Alert email" required><button>Save budget</button></form>
+<button id="sync">Sync now</button>
+<script>
+const api = (m, p, b) => fetch(p, { method: m, headers: { 'content-type': 'application/json' }, body: b && JSON.stringify(b) }).then((r) => r.json());
+async function load() {
+  const { days, status, hasKey } = await api('GET', '/api/usage');
+  document.getElementById('status').textContent = (hasKey ? '' : 'Add a key. ') +
+    `This month: $${status.spend.toFixed(2)}` + (status.budget ? ` of $${status.budget} (${status.pct.toFixed(0)}%)` : '');
+  const max = Math.max(1, ...days.map((d) => d.costUsd)), w = 600 / Math.max(1, days.length);
+  document.getElementById('chart').innerHTML = days.map((d, i) => {
+    const h = (d.costUsd / max) * 180;
+    return `<rect x="${i * w + 2}" y="${190 - h}" width="${w - 4}" height="${h}" fill="#d97757"><title>${d.date}: $${d.costUsd.toFixed(2)}</title></rect>`;
+  }).join('');
+}
+document.getElementById('key').onsubmit = async (e) => { e.preventDefault(); await api('POST', '/api/key', { apiKey: e.target.apiKey.value }); e.target.reset(); load(); };
+document.getElementById('budget').onsubmit = async (e) => { e.preventDefault(); await api('POST', '/api/budget', { monthlyUsd: Number(e.target.monthlyUsd.value), email: e.target.email.value }); load(); };
+document.getElementById('sync').onclick = async () => { const r = await api('POST', '/api/sync'); if (r.error) alert(r.error); load(); };
+load();
+</script>
