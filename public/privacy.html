@@ -1,0 +1,44 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy policy — CodeSpend</title>
+<style>
+body{font:15px/1.55 system-ui;max-width:720px;margin:2rem auto;padding:0 1rem;color:#222}
+h1{font-size:1.6rem}h2{font-size:1.15rem;margin-top:1.6rem}
+nav a{margin-right:1rem}
+</style>
+<nav><a href="/">← CodeSpend</a><a href="/terms">Terms</a></nav>
+<h1>Privacy policy</h1>
+<p>Last updated 12 October 2026. This CodeSpend server is run by its operator. Questions and deletion requests go to <!--CONTACT-->.</p>
+
+<h2>What CodeSpend stores</h2>
+<ul>
+  <li><strong>Vendor API keys and tokens</strong> you connect (Anthropic, OpenAI, GitHub, Cursor). They are encrypted at rest with AES-256-GCM, using a key kept apart from the data file. They are used only to read your usage and cost reports, and they are never sent back to your browser or shown again.</li>
+  <li><strong>Slack incoming-webhook URLs</strong>, encrypted the same way and never shown again.</li>
+  <li><strong>Alert email addresses, project names and monthly budgets</strong> that you enter.</li>
+  <li><strong>Daily cost per tool and project</strong>, as reported by each vendor's API, plus the time and short error message of the last sync. Error messages never contain your key.</li>
+  <li><strong>Branch reports</strong> sent by the <code>codespend-branches</code> command: date, git branch name, token count, estimated cost and commit count. The command reads Claude Code's logs on your own machine and sends only these totals. It never sends prompts, code, file contents, file paths, names or emails.</li>
+</ul>
+<p>CodeSpend sets no cookies, runs no analytics and has no trackers.</p>
+
+<h2>Who else sees data</h2>
+<ul>
+  <li><strong>The AI vendors:</strong> each connected key is sent only to its own vendor's API, to fetch your usage.</li>
+  <li><strong>Email:</strong> if email delivery is configured (SendGrid), alert emails pass through it: recipient, subject and the spend summary.</li>
+  <li><strong>Slack:</strong> alerts are posted to the webhook you gave.</li>
+  <li><strong>Stripe:</strong> if you pay for Pro, Stripe processes the payment and handles your card details. CodeSpend never sees card numbers.</li>
+</ul>
+<p>Nothing is sold or shared for advertising.</p>
+
+<h2>Keeping and deleting data</h2>
+<ul>
+  <li><strong>Remove</strong> next to a connection deletes its stored key and all usage synced with it, immediately. Also revoke the key in the vendor's console: that is the only way to be sure it can't be used.</li>
+  <li><strong>Delete branch data</strong> in the branch view deletes a project's branch reports.</li>
+  <li>To delete everything else (budgets, emails, webhooks), write to <!--CONTACT-->. It is done within 30 days, and you get a confirmation.</li>
+</ul>
+
+<h2>Security</h2>
+<p>Data lives on the operator's server, in one file that only the server's user can read, with keys and webhooks encrypted inside it. Use read-only or reporting-only keys where the vendor offers them.</p>
+
+<h2>Changes</h2>
+<p>Changes to this policy are posted on this page with a new date. Material changes are announced to paying customers by email first.</p>
