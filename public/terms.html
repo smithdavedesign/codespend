@@ -1,18 +1,21 @@
 <!doctype html>
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Terms — CodeSpend</title>
+<!--HEAD-->
 <style>
 body{font:15px/1.55 system-ui;max-width:720px;margin:2rem auto;padding:0 1rem;color:#222}
 h1{font-size:1.6rem}h2{font-size:1.15rem;margin-top:1.6rem}
 nav a{margin-right:1rem}
+footer{margin:2.5rem 0 1rem;border-top:1px solid #eee;padding-top:.6rem;font-size:.9rem}
+footer a{margin-right:1rem}
 </style>
 <nav><a href="/">← CodeSpend</a><a href="/privacy">Privacy policy</a></nav>
 <h1>Terms of service</h1>
-<p>Last updated 12 October 2026. By using this CodeSpend server you agree to these terms. Contact: <!--CONTACT-->.</p>
+<p>Last updated 12 October 2026. By using CodeSpend you agree to these terms. Contact: the project's <a href="https://github.com/smithdavedesign/codespend/issues">GitHub issues</a> (public, so never post a key there), or for a server someone else runs for you, its operator: <!--CONTACT-->.</p>
 
 <h2>What CodeSpend does</h2>
-<p>CodeSpend reads usage and cost reports from AI coding tools with keys you provide. It shows spend by tool, project and git branch, and it emails or posts to Slack when a project reaches 50%, 80% and 100% of its monthly budget.</p>
+<p>CodeSpend reads usage and cost reports from AI coding tools with keys you provide. It shows spend by tool, project and git branch, and it emails or posts to Slack when a project reaches 50%, 80% and 100% of its monthly budget. It runs on your own machine or server, or on one someone runs for you.</p>
 <ul>
   <li><strong>Figures are estimates, not invoices.</strong> Vendors report usage with a delay and bill on their own cycles. Branch costs are computed at list price from Claude Code's logs.</li>
   <li><strong>It does not cap or block spending.</strong> Keep the vendor's own spend limits on.</li>
@@ -22,7 +25,7 @@ nav a{margin-right:1rem}
 <ul>
   <li><strong>Free:</strong> one connected tool, with email alerts.</li>
   <li><strong>Pro: $9 per month per workspace.</strong> All tools, Slack alerts, branch attribution and CSV export. It's billed monthly through Stripe.</li>
-  <li>Cancel any time from the customer portal (Manage subscription). Cancelling stops the next renewal.</li>
+  <li>Cancel any time from the Stripe customer portal (Manage subscription). Cancelling stops the next renewal.</li>
   <li>If CodeSpend didn't work for you in your first 30 days, ask for a refund and you'll get one.</li>
   <li>Prices can change with 30 days' notice by email.</li>
 </ul>
@@ -38,7 +41,7 @@ nav a{margin-right:1rem}
 <p>Don't use CodeSpend to access accounts that aren't yours, to probe or overload vendor APIs, or to break any law.</p>
 
 <h2>No warranty, limited liability</h2>
-<p>CodeSpend is provided as is.</p>
+<p>CodeSpend is provided as is, without warranty of any kind.</p>
 <ul>
   <li>Alerts can be late or missed: a vendor may be down, change its API or report late, and email and Slack can fail.</li>
   <li>CodeSpend is not responsible for your AI vendor bills.</li>
@@ -47,3 +50,5 @@ nav a{margin-right:1rem}
 
 <h2>Ending</h2>
 <p>You can stop using CodeSpend and delete your data at any time. The operator may suspend access that breaks these terms. Paid time already used is not refunded in that case.</p>
+
+<footer><a href="/">CodeSpend</a><a href="/privacy">Privacy policy</a><a href="/terms">Terms</a><a href="https://github.com/smithdavedesign/codespend/issues">Contact: GitHub issues</a></footer>

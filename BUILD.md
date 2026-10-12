@@ -204,8 +204,9 @@ All mutations need `content-type: application/json`.
 ## Run locally
 
 ```
-npm test                         # 110 tests, offline, no real keys
+npm test                         # 126 tests (110 from M1–M3, 16 from go-live), offline, no real keys
 npm start                        # http://127.0.0.1:3000, syncs every 4 minutes
+npm run build                    # the static public site into site/ (what Vercel serves; see LAUNCH-READY.md)
 node bin/codespend-branches.mjs  # inside a repo where you use Claude Code; --dry-run to only print
 npm install && CHROMIUM_PATH=/path/to/chromium npm run screenshots   # PNGs into docs/screenshots/
 ```
@@ -279,7 +280,7 @@ The other M3 items are covered by `test/attribution.test.js`, `test/cli.test.js`
 
 ## Infrastructure
 
-`.provision` asks for two things, both through `request` lines (no broker-managed secret is needed):
+At M3, `.provision` asked for the two things below. Since go-live it asks for the Vercel project (static public site) and the Stripe payment link; see LAUNCH-READY.md. The public site's contact is the GitHub issues page, so `CONTACT_EMAIL` is only needed on a server someone runs for others.
 - **Stripe:** a $9/month subscription Payment Link and the customer-portal login link, set as `STRIPE_PAYMENT_LINK` and `STRIPE_PORTAL_LINK`.
   - Stripe has no monthly fee; it charges per payment.
   - These are public URLs, not secrets. Until they are set, the pricing section says "Payments aren't set up on this server yet."
@@ -288,7 +289,7 @@ The other M3 items are covered by `test/attribution.test.js`, `test/cli.test.js`
 **Not requested:**
 - No database: the JSON file store is kept.
 - No Google API.
-- No Vercel project, because Vercel doesn't fit the 5-minute timer (see Deploy).
+- No Vercel project for the app, because Vercel doesn't fit the 5-minute timer (see Deploy). Since go-live, Vercel serves only the static public site: the landing page, privacy and terms. See LAUNCH-READY.md.
 - No encryption key from the broker: locally it is generated, and on a VM it is generated on the VM.
 
 ## Unverified (no web access in this sandbox; check with real data before charging)
@@ -325,7 +326,7 @@ The other M3 items are covered by `test/attribution.test.js`, `test/cli.test.js`
 
 - **Before charging** (REVENUE.md "must be true"):
   - **A live URL with a login.** It needs authentication or an access token (which also closes the DNS-rebinding gap) and an always-on host: a free VM now, and Postgres (Neon free) once there are several workspaces.
-  - **The Stripe links and contact email set** (requested in `.provision`).
+  - **The Stripe links set** (the payment link is requested in `.provision`; see LAUNCH-READY.md).
   - **A real-key run of every vendor**, and real 50/80/100% alerts observed on live usage.
   - **One real Claude Code log run of the CLI** (see "Unverified").
   - **A free email transport.** SendGrid may have no free plan; Slack is the $0 channel that reaches people today.

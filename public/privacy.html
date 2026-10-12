@@ -1,17 +1,36 @@
 <!doctype html>
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Privacy policy — CodeSpend</title>
+<!--HEAD-->
 <style>
 body{font:15px/1.55 system-ui;max-width:720px;margin:2rem auto;padding:0 1rem;color:#222}
 h1{font-size:1.6rem}h2{font-size:1.15rem;margin-top:1.6rem}
 nav a{margin-right:1rem}
+footer{margin:2.5rem 0 1rem;border-top:1px solid #eee;padding-top:.6rem;font-size:.9rem}
+footer a{margin-right:1rem}
 </style>
 <nav><a href="/">← CodeSpend</a><a href="/terms">Terms</a></nav>
 <h1>Privacy policy</h1>
-<p>Last updated 12 October 2026. This CodeSpend server is run by its operator. Questions and deletion requests go to <!--CONTACT-->.</p>
+<p>Last updated 12 October 2026. Questions go to the project's <a href="https://github.com/smithdavedesign/codespend/issues">GitHub issues</a>. Issues are public, so never post a key or personal data there. For data on a CodeSpend server that someone else runs for you, including deletion requests, write to its operator: <!--CONTACT-->.</p>
 
-<h2>What CodeSpend stores</h2>
+<h2>In short</h2>
+<ul>
+  <li><strong>The website collects nothing about you</strong> beyond the three anonymous events below. It sets no cookies.</li>
+  <li><strong>The CodeSpend app runs on your own machine or server.</strong> What it stores stays there, with keys encrypted.</li>
+</ul>
+
+<h2>The website and its three events</h2>
+<p>The website sets no cookies and has no ad trackers, third-party analytics or accounts. To count real use, the official production site sends three events to RepoHQ (repohq.vercel.app), the project owner's own dashboard:</p>
+<ul>
+  <li><strong>visit</strong>: once per browser session, when you open a page;</li>
+  <li><strong>activate</strong>: once per browser, the first time <strong>Sync now</strong> succeeds in a CodeSpend dashboard served by the official production deployment;</li>
+  <li><strong>checkout</strong>: when you click <strong>Get Pro</strong>.</li>
+</ul>
+<p>Each event contains only the product name ("codespend") and the event name. If you followed a link from another website, it also contains that site's address (the referrer). It never contains the address of the page you are on, and it carries no identifier or cookie. The event doesn't include your IP address, but RepoHQ's server sees it while handling the request, as with any web request.</p>
+<p>So that each event is sent only once, the page notes in your browser's session or local storage that it was sent. That note never leaves your browser. Nothing is sent from automated browsers, preview deployments, or CodeSpend servers you run yourself.</p>
+
+<h2>What the CodeSpend app stores</h2>
 <ul>
   <li><strong>Vendor API keys and tokens</strong> you connect (Anthropic, OpenAI, GitHub, Cursor). They are encrypted at rest with AES-256-GCM, using a key kept apart from the data file. They are used only to read your usage and cost reports, and they are never sent back to your browser or shown again.</li>
   <li><strong>Slack incoming-webhook URLs</strong>, encrypted the same way and never shown again.</li>
@@ -19,7 +38,7 @@ nav a{margin-right:1rem}
   <li><strong>Daily cost per tool and project</strong>, as reported by each vendor's API, plus the time and short error message of the last sync. Error messages never contain your key.</li>
   <li><strong>Branch reports</strong> sent by the <code>codespend-branches</code> command: date, git branch name, token count, estimated cost and commit count. The command reads Claude Code's logs on your own machine and sends only these totals. It never sends prompts, code, file contents, file paths, names or emails.</li>
 </ul>
-<p>CodeSpend sets no cookies, runs no analytics and has no trackers.</p>
+<p>All of this lives on the CodeSpend server you run, or that someone runs for you. None of it is sent to the CodeSpend website or to RepoHQ. The app itself sets no cookies.</p>
 
 <h2>Who else sees data</h2>
 <ul>
@@ -27,6 +46,7 @@ nav a{margin-right:1rem}
   <li><strong>Email:</strong> if email delivery is configured (SendGrid), alert emails pass through it: recipient, subject and the spend summary.</li>
   <li><strong>Slack:</strong> alerts are posted to the webhook you gave.</li>
   <li><strong>Stripe:</strong> if you pay for Pro, Stripe processes the payment and handles your card details. CodeSpend never sees card numbers.</li>
+  <li><strong>Hosting:</strong> the website is served by Vercel, which keeps standard request logs.</li>
 </ul>
 <p>Nothing is sold or shared for advertising.</p>
 
@@ -34,7 +54,7 @@ nav a{margin-right:1rem}
 <ul>
   <li><strong>Remove</strong> next to a connection deletes its stored key and all usage synced with it, immediately. Also revoke the key in the vendor's console: that is the only way to be sure it can't be used.</li>
   <li><strong>Delete branch data</strong> in the branch view deletes a project's branch reports.</li>
-  <li>To delete everything else (budgets, emails, webhooks), write to <!--CONTACT-->. It is done within 30 days, and you get a confirmation.</li>
+  <li>To delete everything else (budgets, emails, webhooks), delete the data file on your own server. If someone else runs the server, write to <!--CONTACT-->. It is done within 30 days, and you get a confirmation.</li>
 </ul>
 
 <h2>Security</h2>
@@ -42,3 +62,5 @@ nav a{margin-right:1rem}
 
 <h2>Changes</h2>
 <p>Changes to this policy are posted on this page with a new date. Material changes are announced to paying customers by email first.</p>
+
+<footer><a href="/">CodeSpend</a><a href="/privacy">Privacy policy</a><a href="/terms">Terms</a><a href="https://github.com/smithdavedesign/codespend/issues">Contact: GitHub issues</a></footer>

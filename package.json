@@ -9,6 +9,7 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "start": "node src/server.js",
+    "build": "node scripts/build-site.mjs",
     "branches": "node bin/codespend-branches.mjs",
     "screenshots": "node scripts/screenshots.mjs"
   },

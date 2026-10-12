@@ -2,27 +2,25 @@
 
 ## Screenshots
 
-![Start page with the get-started checklist, desktop](docs/screenshots/home-desktop.png)
-The first run on desktop: nothing is connected yet, and the 3-step checklist (connect, budget, sync) points the way.
+![Public start page with the Get Pro button, desktop](docs/screenshots/home-desktop.png)
+The public start page (`npm run build`) explains the product and shows the **Get Pro · $9/month** button, because a payment link is set.
 
-![Start page with the get-started checklist, phone](docs/screenshots/home-mobile.png)
-The same start page on an iPhone 13.
+![Pricing and footer links on the public start page, phone](docs/screenshots/home-pricing-mobile.png)
+The bottom of the same page on an iPhone 13: the Pro plan with **Get Pro** above the footer links (Privacy, Terms, GitHub, contact).
 
-![Dashboard after Sync now: projects against budgets, spend by tool, date range](docs/screenshots/dashboard-desktop.png)
-After connecting Claude, OpenAI, Copilot and Cursor and pressing Sync now (sample data):
-- `platform` is at 138% of its budget, with alerts sent to email and Slack.
-- The month's spend is split across the per-tool charts and the stacked daily chart.
+![The core action: four tools connected and synced, with Sync now, desktop](docs/screenshots/sync-desktop.png)
+The core action in the dashboard: Claude, OpenAI, Copilot and Cursor are connected through the real UI, each shows its last sync, and **Sync now** is ready.
 
-![Dashboard on a phone](docs/screenshots/dashboard-mobile.png)
-The same dashboard on a phone: budget status, the date-range picker and the per-tool breakdown.
+![The core action on a phone](docs/screenshots/sync-mobile.png)
+The same connections and **Sync now** on a phone.
 
-![Spend by git branch, desktop](docs/screenshots/branches-desktop.png)
-The real `codespend-branches` CLI, run on a sample repository, charges each Claude Code call to the branch checked out at the time. The view shows spend, share, tokens, commits and cost per commit for each branch.
+![The result: projects against budgets and spend by tool, desktop](docs/screenshots/result-desktop.png)
+The result of Sync now: `platform` is at 138% of its budget, with alerts sent to email and Slack, and the month's spend is split by tool.
 
-![Spend by git branch, phone](docs/screenshots/branches-mobile.png)
-The branch breakdown on a phone.
+![The result on a phone](docs/screenshots/result-mobile.png)
+The same budgets, date range and per-tool spend on a phone.
 
-_Screenshots come from `npm run screenshots`. The vendor APIs are stubbed with sample data, and no real key is used._
+_Screenshots come from `npm run screenshots`. The vendor APIs are stubbed with sample data, no real key is used, and the payment link is a placeholder._
 
 ---
 
@@ -102,13 +100,20 @@ All of these are optional environment variables:
 | Variable | Purpose |
 |---|---|
 | `CODESPEND_ENCRYPTION_KEY` | 32 bytes, base64 (`openssl rand -base64 32`). It encrypts stored keys. Without it, a `secret.key` file is generated next to the data file. |
-| `STRIPE_PAYMENT_LINK` | The $9/month Stripe Payment Link (`https://buy.stripe.com/...`), shown as **Upgrade**. |
+| `STRIPE_PAYMENT_LINK` | The $9/month Stripe Payment Link (`https://buy.stripe.com/...`), shown as **Get Pro**. Without it, or if it isn't a `buy.stripe.com` link, the button is hidden. |
 | `STRIPE_PORTAL_LINK` | The Stripe customer-portal login link (`https://billing.stripe.com/...`), shown as **Manage or cancel**. |
 | `CONTACT_EMAIL` | The address shown on `/privacy` and `/terms` for deletion requests. |
 | `SLACK_WEBHOOK_URL` | Fallback Slack webhook for projects without their own. |
 | `SENDGRID_API_KEY` + `ALERT_FROM` | Send real email. Without them, alerts go to `data/outbox.jsonl`. |
 | `PORT` | Server port (default 3000). |
 | `DB_FILE` | Data file (default `data/db.json`). |
+| `SITE_URL` | The public site's address, for canonical and share links (default: Vercel's production domain, else `https://codespend.vercel.app`). |
+
+### The public site
+
+`npm run build` writes the public website into `site/`: the landing page, `/privacy`, `/terms`, `robots.txt`, `sitemap.xml` and the share image `og.png` (drawn by code). Vercel builds and serves it (`vercel.json`). It is static: the dashboard, which holds keys and has no login, is never deployed there. It reads `SITE_URL`, `STRIPE_PAYMENT_LINK` and `CONTACT_EMAIL` at build time, so changing one needs a redeploy.
+
+Every page loads `public/beacon.js`. On the Vercel production deployment only, it sends three anonymous events to RepoHQ: `visit`, `activate` and `checkout` (see `/privacy`). It never sends anything from a server you run yourself, from automated browsers, or when `localStorage["repohq:notrack"]` is set. [LAUNCH-READY.md](LAUNCH-READY.md) has the details.
 
 Effort: Medium · Confidence: Medium
 

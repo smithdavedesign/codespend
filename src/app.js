@@ -1,5 +1,4 @@
 import { createServer } from 'node:http';
-import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { PROVIDERS } from './providers.js';
 import { evaluateBudget, crossedThreshold, usageRows, sumBy } from './budget.js';
@@ -7,21 +6,19 @@ import { DEFAULT_PROJECT } from './store.js';
 import { createSyncer, startScheduler } from './sync.js';
 import { createSlack, isSlackWebhookUrl } from './slack.js';
 import { validateReport, saveReport, summarize, branchRows, isDate, RESERVED } from './branches.js';
+import { PRICE_USD, DEFAULT_SITE_URL, EMAIL, stripeLink, contactHtml as renderContact, renderPage, beaconJs } from './site.js';
 
-const PUBLIC = new URL('../public/', import.meta.url);
+export { PRICE_USD };
 const PROJECT = /^[\w.\-/ ]{1,64}$/; // a repo name ("acme/web") or a custom tag
 const GITHUB_ORG = /^[A-Za-z0-9-]{1,39}$/;
-const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_REPORT_BYTES = 1024 * 1024; // a branch report: up to 5,000 rows
 const MAX_RANGE_DAYS = 366;
 const DAY_MS = 86_400_000;
-export const PRICE_USD = 9; // REVENUE.md: $9/month per workspace
 
 const ok = (body = { ok: true }, code = 200) => ({ code, body });
 const fail = (code, error) => ({ code, body: { error } });
 const notFound = () => fail(404, 'not found');
-const escapeHtml = (v) => String(v).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const round6 = (n) => Math.round(n * 1e6) / 1e6;
 
 // Missing or blank → the default project; otherwise a validated label, or null if invalid.
@@ -46,17 +43,6 @@ function parseRange(params, now) {
   return { from, to };
 }
 
-// Stripe Checkout payment links and customer-portal links only: anything else is dropped, never rendered.
-function stripeLink(v, host) {
-  if (typeof v !== 'string') return null;
-  try {
-    const u = new URL(v);
-    return u.protocol === 'https:' && u.hostname === host && !u.port && !u.username && !u.password && u.pathname.length > 1 ? u.href : null;
-  } catch {
-    return null;
-  }
-}
-
 // RFC 4180 cells. A cell starting with = + - @ (or a tab/CR) is prefixed with ' so a spreadsheet won't run it as a formula.
 function csvCell(v) {
   let s = typeof v === 'number' ? String(round6(v)) : String(v ?? '');
@@ -66,7 +52,8 @@ function csvCell(v) {
 const csv = (header, rows) => [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 const download = (name, body) => ({ code: 200, type: 'text/csv; charset=utf-8', headers: { 'content-disposition': `attachment; filename="${name}"` }, body });
 
-export function createApp({ store, mailer, slack, fetch = globalThis.fetch, now = () => new Date(), defaultSlackWebhookUrl = null, syncIntervalMs = 0, billing = {}, contactEmail = null }) {
+// siteUrl: the public site's origin, for canonical and share URLs. vercelEnv: VERCEL_ENV; the beacon only sends on "production".
+export function createApp({ store, mailer, slack, fetch = globalThis.fetch, now = () => new Date(), defaultSlackWebhookUrl = null, syncIntervalMs = 0, billing = {}, contactEmail = null, siteUrl = DEFAULT_SITE_URL, vercelEnv = '' }) {
   const syncer = createSyncer({ store, mailer, slack: slack ?? createSlack({ fetch }), fetch, now, defaultSlackWebhookUrl });
   const month = () => now().toISOString().slice(0, 7);
   const monthRows = () => usageRows(store.get()).filter((r) => r.date.startsWith(month()));
@@ -77,9 +64,7 @@ export function createApp({ store, mailer, slack, fetch = globalThis.fetch, now 
     paymentLink: stripeLink(billing.paymentLink, 'buy.stripe.com'),
     portalLink: stripeLink(billing.portalLink, 'billing.stripe.com'),
   };
-  const contactHtml = typeof contactEmail === 'string' && EMAIL.test(contactEmail)
-    ? `<a href="mailto:${escapeHtml(contactEmail)}">${escapeHtml(contactEmail)}</a>`
-    : 'the person who runs this CodeSpend server';
+  const pageOpts = { origin: siteUrl, env: vercelEnv ?? '', paymentLink: links.paymentLink, contact: renderContact(contactEmail) };
 
   // Budgets and the projects table are month-to-date; the tool totals and charts follow the chosen range.
   function dashboard({ from, to }) {
@@ -164,7 +149,7 @@ export function createApp({ store, mailer, slack, fetch = globalThis.fetch, now 
     return ok();
   }
 
-  const page = (name) => ({ code: 200, type: 'text/html; charset=utf-8', body: readFileSync(new URL(name, PUBLIC), 'utf8').replaceAll('<!--CONTACT-->', () => contactHtml) });
+  const page = (key) => ({ code: 200, type: 'text/html; charset=utf-8', body: renderPage(key, pageOpts) });
 
   async function sync() {
     if (!store.get().connections.length) return fail(400, 'Add a connection first');
@@ -240,9 +225,10 @@ export function createApp({ store, mailer, slack, fetch = globalThis.fetch, now 
   }
 
   function getRoute(pathname, params) {
-    if (pathname === '/') return page('index.html');
-    if (pathname === '/privacy') return page('privacy.html');
-    if (pathname === '/terms') return page('terms.html');
+    if (pathname === '/') return page('dashboard');
+    if (pathname === '/privacy') return page('privacy');
+    if (pathname === '/terms') return page('terms');
+    if (pathname === '/beacon.js') return { code: 200, type: 'text/javascript; charset=utf-8', body: beaconJs() };
     if (!['/api/usage', '/api/usage.csv', '/api/branches', '/api/branches.csv'].includes(pathname)) return notFound();
     const range = parseRange(params, now());
     if (range.error) return fail(400, range.error);
