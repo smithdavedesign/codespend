@@ -14,6 +14,7 @@ export function createMailer({ sendgridKey, from, outbox = 'data/outbox.jsonl', 
             subject,
             content: [{ type: 'text/plain', value: text }],
           }),
+          signal: AbortSignal.timeout(30_000), // a hung send must not stall the alert timer
         });
         if (!res.ok) throw new Error(`SendGrid error: ${res.status}`);
       },

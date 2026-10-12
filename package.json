@@ -3,9 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "codespend-branches": "bin/codespend-branches.mjs"
+  },
   "scripts": {
     "test": "node --test test/*.test.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "branches": "node bin/codespend-branches.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20.4"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.64.0"
+  }
 }

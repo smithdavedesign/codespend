@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { monthSpend, evaluateBudget } from '../src/budget.js';
+import { monthSpend, evaluateBudget, crossedThreshold, THRESHOLDS } from '../src/budget.js';
 
 const days = [
   { date: '2026-09-30', costUsd: 999 },
@@ -21,4 +21,11 @@ test('at or over budget crosses 100%', () => {
 });
 test('no budget set never crosses', () => {
   assert.equal(evaluateBudget(500, null).crossed, false);
+});
+
+// M2: alerts at 50%, 80% and 100% of a project budget.
+test('crossedThreshold returns the highest of 50/80/100% reached, or 0', () => {
+  assert.deepEqual(THRESHOLDS, [50, 80, 100]);
+  const cases = [[0, 0], [49.99, 0], [50, 50], [79.9, 50], [80, 80], [99.99, 80], [100, 100], [250, 100], [null, 0]];
+  for (const [pct, want] of cases) assert.equal(crossedThreshold(pct), want, `pct ${pct}`);
 });

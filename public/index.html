@@ -1,29 +1,379 @@
 <!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CodeSpend</title>
-<style>body{font:15px system-ui;max-width:640px;margin:2rem auto;padding:0 1rem}input,button{font:inherit;margin:.2rem}</style>
-<h1>CodeSpend — Claude spend</h1>
+<style>
+[hidden]{display:none !important} /* buttons, .btn and .grid set display, which would otherwise beat the hidden attribute */
+body{font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Liberation Sans",sans-serif;max-width:900px;margin:0 auto;padding:1rem;color:#222}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:.25rem 1.2rem;border-bottom:1px solid #eee;margin-bottom:.5rem}
+header h1{font-size:1.35rem;margin:.4rem 0}
+header nav a{margin-right:.9rem}
+h2{font-size:1.15rem;margin:1.6rem 0 .5rem}
+a{color:#1d4ed8}
+input,select,button{font:inherit;margin:.2rem}
+button,.btn{padding:.25rem .7rem;border:1px solid #bbb;border-radius:6px;background:#fafafa;cursor:pointer;color:#222;text-decoration:none;display:inline-block}
+.btn.primary{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+table{border-collapse:collapse;width:100%;margin:.5rem 0}
+th,td{text-align:left;padding:.3rem .5rem;border-bottom:1px solid #eee;white-space:nowrap}
+td.num,th.num{text-align:right}
+.scroll{overflow-x:auto}
+.muted{color:#777}.warn{color:#b54708}.over{color:#b42318;font-weight:600}
+.sw{display:inline-block;width:.8em;height:.8em;margin:0 .3em 0 .8em;vertical-align:middle;border-radius:2px}
+.card{border:1px solid #e5e5e5;border-radius:8px;padding:.7rem .9rem;margin:.6rem 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.7rem}
+.grid .card{margin:0}
+.big{font-size:1.4rem;font-weight:600}
+svg{width:100%;height:auto;display:block}
+svg.mini{height:56px;margin-top:.4rem}
+#chart{height:180px}
+.axis{display:flex;justify-content:space-between;font-size:.8rem;color:#777}
+.bar{background:#e8eefc;border-radius:3px;height:.7em;min-width:2px}
+.bar>span{display:block;height:100%;background:#1d4ed8;border-radius:3px}
+#onboarding ol{margin:.3rem 0 .2rem 1.2rem;padding:0}
+#onboarding li{margin:.3rem 0}
+#onboarding li.done{color:#777;text-decoration:line-through}
+#onboarding li.done::marker{content:"✓  ";color:#15803d}
+.range{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem .4rem}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.8rem}
+.plan h3{margin:.2rem 0}.price{font-size:1.6rem;font-weight:600;margin:.2rem 0}.price span{font-size:.9rem;font-weight:400;color:#555}
+.plan.pro{border-color:#1d4ed8}
+pre{background:#f6f6f6;padding:.6rem;border-radius:6px;overflow-x:auto;font-size:.85rem}
+footer{margin:2rem 0 1rem;border-top:1px solid #eee;padding-top:.6rem;font-size:.9rem}
+footer a{margin-right:1rem}
+td.wrap{white-space:normal;overflow-wrap:anywhere}
+td.soft{white-space:normal}
+@media (max-width:600px){
+  body{padding:.6rem}
+  form input,form select{width:100%;box-sizing:border-box;margin:.2rem 0}
+  .range input{flex:1 1 40%}
+  .range button{padding:.15rem .45rem;font-size:.85rem}
+  th,td{padding:.3rem .3rem}
+  td.name{white-space:normal;overflow-wrap:anywhere}
+  .opt{display:none}
+}
+</style>
+<header>
+  <h1>CodeSpend</h1>
+  <nav><a href="#branches">Branches</a><a href="#pricing">Pricing</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav>
+</header>
 <p id="status">Loading…</p>
-<svg id="chart" width="600" height="200" role="img" aria-label="Daily Claude spend"></svg>
-<h2>Setup</h2>
-<form id="key"><input name="apiKey" type="password" placeholder="Anthropic admin API key" required><button>Save key</button></form>
-<form id="budget"><input name="monthlyUsd" type="number" step="0.01" min="0.01" placeholder="Monthly budget $" required>
-<input name="email" type="email" placeholder="Alert email" required><button>Save budget</button></form>
-<button id="sync">Sync now</button>
+
+<section id="onboarding" class="card" hidden>
+  <strong>Get started</strong> <span class="muted" id="onboarding-progress"></span>
+  <ol>
+    <li data-step="connected">Connect a tool: paste an admin key under <a href="#connect">Connect a tool</a>.</li>
+    <li data-step="budgeted">Set a project's monthly budget and where alerts go, under <a href="#budget">Project budget and alerts</a>.</li>
+    <li data-step="synced">Press <strong>Sync now</strong> for the first sync. After that the server syncs every 4 minutes on its own.</li>
+    <li data-step="branches">Optional: see spend per git branch by running <code>codespend-branches</code> in a repository (see <a href="#branches">Branches</a>).</li>
+  </ol>
+</section>
+
+<h2 id="projects-title">Projects <span class="muted" style="font-size:.85rem;font-weight:400">this month, against monthly budgets</span></h2>
+<div class="scroll"><table id="projects"></table></div>
+
+<h2 id="spend-title">Spend by tool</h2>
+<div class="range card">
+  <label>From <input type="date" id="range-from"></label>
+  <label>To <input type="date" id="range-to"></label>
+  <button id="range-apply">Apply</button>
+  <button data-preset="month">This month</button>
+  <button data-preset="last30">Last 30 days</button>
+  <button data-preset="lastmonth">Last month</button>
+</div>
+<p><span class="big" id="range-total"></span> <a id="usage-csv" href="/api/usage.csv">Download usage CSV</a></p>
+<div id="tool-charts" class="grid"></div>
+<div id="chart-box" style="margin-top:.8rem">
+  <div id="legend"></div>
+  <svg id="chart" viewBox="0 0 720 200" preserveAspectRatio="none" role="img" aria-label="Daily spend in the selected range, stacked by tool"></svg>
+  <div class="axis"><span id="axis-from"></span><span id="axis-to"></span></div>
+</div>
+<div class="scroll"><table id="tools"></table></div>
+
+<h2 id="branches-title">Spend by git branch</h2>
+<section id="branches">
+  <div class="range">
+    <label>Project <select id="branch-project"></select></label>
+    <a id="branches-csv" href="/api/branches.csv">Download branch CSV</a>
+    <button id="branches-delete" hidden>Delete branch data</button>
+  </div>
+  <p id="branch-summary" class="muted"></p>
+  <div class="scroll"><table id="branch-table"></table></div>
+  <details class="card" id="branch-help">
+    <summary>How branch attribution works</summary>
+    <p>Billing APIs only report spend per key and day. The branch view comes from your own machine instead:</p>
+    <ul>
+      <li>Claude Code logs every model call with its time and tokens.</li>
+      <li>Your repository's reflog records which branch was checked out at each moment.</li>
+    </ul>
+    <p><code>codespend-branches</code> joins the two. It prices the tokens at list price and sends per-day, per-branch totals here. It never sends prompts, code or file paths. Run it in a repository:</p>
+    <pre>cd ~/src/your-repo
+node /path/to/codespend/bin/codespend-branches.mjs            # posts to http://127.0.0.1:3000
+node /path/to/codespend/bin/codespend-branches.mjs --dry-run  # print only</pre>
+    <p class="muted">Run it again any time; it replaces its earlier report. Branch costs are estimates and are not added to budgets.</p>
+  </details>
+</section>
+
+<h2>Connections</h2>
+<div class="scroll"><table id="connections"></table></div>
+<button id="sync">Sync now</button> <span class="muted">The server also syncs every 4 minutes on its own.</span>
+
+<h2>Connect a tool</h2>
+<form id="connect">
+  <select name="tool" id="tool"></select>
+  <input name="apiKey" type="password" placeholder="Admin API key or token" autocomplete="off" required>
+  <input name="org" id="org" placeholder="GitHub organization" hidden>
+  <input name="project" placeholder="Project: repo name or tag" value="default">
+  <button>Connect</button>
+</form>
+<p class="muted" id="tool-help"></p>
+
+<h2>Project budget and alerts</h2>
+<form id="budget">
+  <input name="project" placeholder="Project" value="default" required>
+  <input name="monthlyUsd" type="number" step="0.01" min="0.01" placeholder="Monthly budget $" required>
+  <input name="email" type="email" placeholder="Alert email" required>
+  <input name="slackWebhookUrl" type="password" placeholder="Slack webhook URL (blank keeps the current one)" autocomplete="off">
+  <label><input name="removeSlack" type="checkbox"> remove Slack</label>
+  <button>Save budget</button>
+</form>
+<p class="muted">Alerts go to email and Slack at 50%, 80% and 100% of a project's monthly budget, once per threshold each month.
+Keys and webhooks are encrypted on this server and never shown again. "Remove" deletes a key and its synced usage.</p>
+
+<h2 id="pricing-title">Pricing</h2>
+<section id="pricing">
+  <div class="plans">
+    <div class="card plan">
+      <h3>Free</h3>
+      <p class="price">$0</p>
+      <ul><li>1 connected tool</li><li>Email alerts at 50%, 80% and 100%</li><li>Daily spend chart</li></ul>
+    </div>
+    <div class="card plan pro">
+      <h3>Pro</h3>
+      <p class="price"><span id="price">$9</span><span>/month per workspace</span></p>
+      <ul><li>Claude, OpenAI, Copilot and Cursor</li><li>Email and Slack alerts</li><li>Spend per git branch</li><li>CSV export and date ranges</li></ul>
+      <a id="upgrade" class="btn primary" hidden>Upgrade with Stripe</a>
+      <a id="manage" hidden>Manage or cancel subscription</a>
+      <p class="muted" id="pay-note" hidden>Payments aren't set up on this server yet.</p>
+    </div>
+  </div>
+  <p class="muted">Paying means you agree to the <a href="/terms">terms</a> and the <a href="/privacy">privacy policy</a>. Cancel any time.</p>
+</section>
+
+<footer><a href="/privacy">Privacy policy</a><a href="/terms">Terms</a><span class="muted">CodeSpend: AI coding spend, budgets and alerts.</span></footer>
+
 <script>
-const api = (m, p, b) => fetch(p, { method: m, headers: { 'content-type': 'application/json' }, body: b && JSON.stringify(b) }).then((r) => r.json());
-async function load() {
-  const { days, status, hasKey } = await api('GET', '/api/usage');
-  document.getElementById('status').textContent = (hasKey ? '' : 'Add a key. ') +
-    `This month: $${status.spend.toFixed(2)}` + (status.budget ? ` of $${status.budget} (${status.pct.toFixed(0)}%)` : '');
-  const max = Math.max(1, ...days.map((d) => d.costUsd)), w = 600 / Math.max(1, days.length);
-  document.getElementById('chart').innerHTML = days.map((d, i) => {
-    const h = (d.costUsd / max) * 180;
-    return `<rect x="${i * w + 2}" y="${190 - h}" width="${w - 4}" height="${h}" fill="#d97757"><title>${d.date}: $${d.costUsd.toFixed(2)}</title></rect>`;
+const COLORS = { claude: '#d97757', openai: '#10a37f', copilot: '#6e40c9', cursor: '#333' };
+const HELP = {
+  claude: 'Anthropic Admin API key: Console → Settings → Admin keys.',
+  openai: 'OpenAI Admin key: Platform → Settings → Organization → Admin keys.',
+  copilot: 'GitHub token that can read your organization\'s billing (org owner or billing manager), plus the org login.',
+  cursor: 'Cursor team Admin API key: Dashboard → Settings → Advanced → Admin API keys.',
+};
+const DAY = 86400000;
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+const usd = (n) => `$${Number(n).toFixed(2)}`;
+const iso = (t) => new Date(t).toISOString().slice(0, 10);
+async function api(method, path, body) {
+  const r = await fetch(path, { method, headers: { 'content-type': 'application/json' }, body: body && JSON.stringify(body) });
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+  return j;
+}
+const run = (fn) => async (e) => { e?.preventDefault?.(); try { await fn(e); await load(); } catch (err) { alert(err.message); } };
+let tools = [];
+const view = { from: '', to: '', project: '' };
+const rangeQuery = () => new URLSearchParams(Object.entries({ from: view.from, to: view.to }).filter(([, v]) => v)).toString();
+
+// Every date in [from, to], so gaps show as gaps.
+function datesIn(from, to) {
+  const out = [];
+  for (let t = Date.parse(from); t <= Date.parse(to); t += DAY) out.push(iso(t));
+  return out;
+}
+
+function bars(dates, series, height = 200) {
+  const totals = dates.map((d) => series.reduce((s, x) => s + (x.values[d] ?? 0), 0));
+  const max = Math.max(...totals, 0) || 1;
+  const w = 720 / Math.max(1, dates.length);
+  return dates.map((date, i) => {
+    let y = height;
+    return series.map((x) => {
+      const v = x.values[date] ?? 0;
+      const h = (v / max) * (height - 10);
+      if (!h) return '';
+      y -= h;
+      return `<rect x="${i * w + w * 0.1}" y="${y}" width="${Math.max(1, w * 0.8)}" height="${h}" fill="${x.color}"><title>${esc(date)} ${esc(x.label)}: ${usd(v)}</title></rect>`;
+    }).join('');
   }).join('');
 }
-document.getElementById('key').onsubmit = async (e) => { e.preventDefault(); await api('POST', '/api/key', { apiKey: e.target.apiKey.value }); e.target.reset(); load(); };
-document.getElementById('budget').onsubmit = async (e) => { e.preventDefault(); await api('POST', '/api/budget', { monthlyUsd: Number(e.target.monthlyUsd.value), email: e.target.email.value }); load(); };
-document.getElementById('sync').onclick = async () => { const r = await api('POST', '/api/sync'); if (r.error) alert(r.error); load(); };
-load();
+
+function charts(d) {
+  const dates = datesIn(d.range.from, d.range.to);
+  const shown = d.tools.filter((t) => t.connected || t.rangeUsd);
+  const series = shown.map((t) => ({ label: t.label, color: COLORS[t.tool] ?? '#999', values: Object.fromEntries(t.days.map((x) => [x.date, x.costUsd])) }));
+  $('chart-box').hidden = !d.range.totalUsd;
+  $('chart').innerHTML = bars(dates, series);
+  $('axis-from').textContent = d.range.from;
+  $('axis-to').textContent = d.range.to;
+  $('legend').innerHTML = shown.map((t) => `<span class="sw" style="background:${COLORS[t.tool] ?? '#999'}"></span>${esc(t.label)}`).join('');
+  $('range-total').textContent = `${usd(d.range.totalUsd)} from ${d.range.from} to ${d.range.to}`;
+  $('tool-charts').hidden = !shown.length;
+  if (!d.range.totalUsd) $('range-total').insertAdjacentHTML('beforeend', ' <span class="muted" style="font-size:.9rem;font-weight:400">no spend synced in this range yet</span>');
+  // One chart per tool: its own daily spend, its total and its share of the range.
+  $('tool-charts').innerHTML = shown.map((t, i) => {
+    const share = d.range.totalUsd ? Math.round((t.rangeUsd / d.range.totalUsd) * 100) : 0;
+    return `<div class="card"><div><span class="sw" style="margin-left:0;background:${series[i].color}"></span><strong>${esc(t.label)}</strong></div>`
+      + `<div class="big">${usd(t.rangeUsd)}</div><div class="muted">${share}% of spend · ${t.days.length} day(s) with spend</div>`
+      + `<svg class="mini" viewBox="0 0 720 120" preserveAspectRatio="none" role="img" aria-label="${esc(t.label)} daily spend">${bars(dates, [series[i]], 120)}</svg></div>`;
+  }).join('');
+}
+
+function onboarding(o) {
+  const required = ['connected', 'budgeted', 'synced'];
+  const done = required.filter((k) => o[k]).length;
+  $('onboarding').hidden = done === required.length;
+  $('onboarding-progress').textContent = `${done} of ${required.length} done`;
+  for (const li of $('onboarding').querySelectorAll('li')) li.classList.toggle('done', !!o[li.dataset.step]);
+}
+
+function pricing(b) {
+  $('price').textContent = `$${b.priceUsd}`;
+  $('upgrade').hidden = !b.paymentLink;
+  if (b.paymentLink) $('upgrade').href = b.paymentLink;
+  $('manage').hidden = !b.portalLink;
+  if (b.portalLink) $('manage').href = b.portalLink;
+  $('pay-note').hidden = !!b.paymentLink;
+}
+
+function branches(b) {
+  view.project = b.project ?? '';
+  $('branch-project').innerHTML = b.projects.length
+    ? b.projects.map((p) => `<option value="${esc(p)}"${p === b.project ? ' selected' : ''}>${esc(p)}</option>`).join('')
+    : '<option value="">no branch data yet</option>';
+  const q = new URLSearchParams(rangeQuery());
+  if (b.project) q.set('project', b.project);
+  $('branches-csv').href = `/api/branches.csv?${q}`;
+  $('branches-delete').hidden = !b.project;
+  $('branch-help').open = !b.projects.length;
+  if (!b.branches.length) {
+    $('branch-summary').textContent = b.project ? `No branch spend for ${b.project} between ${b.from} and ${b.to}.` : 'No branch data yet. Run codespend-branches in a repository (see below).';
+    $('branch-table').innerHTML = '';
+    return;
+  }
+  $('branch-summary').textContent = `${usd(b.totalUsd)} of Claude Code spend across ${b.branches.length} branch(es) and ${b.commits} commit(s), ${b.from} to ${b.to}`
+    + (b.reportedAt ? ` · last report ${new Date(b.reportedAt).toLocaleString()}` : '');
+  $('branch-table').innerHTML = '<tr><th>Branch</th><th class="num">Spend</th><th style="width:30%">Share</th><th class="num opt">Tokens</th><th class="num">Commits</th><th class="num opt">Per commit</th></tr>'
+    + b.branches.map((x) => `<tr><td class="name">${esc(x.branch)}</td><td class="num">${usd(x.costUsd)}</td>`
+      + `<td><div class="bar" title="${x.sharePct.toFixed(1)}%"><span style="width:${Math.max(0, Math.min(100, x.sharePct)).toFixed(1)}%"></span></div></td>`
+      + `<td class="num opt">${x.tokens.toLocaleString()}</td><td class="num">${x.commits}</td><td class="num opt">${x.commits ? usd(x.costUsd / x.commits) : '–'}</td></tr>`).join('');
+}
+
+async function load() {
+  let d;
+  try {
+    d = await api('GET', `/api/usage?${rangeQuery()}`);
+  } catch (err) {
+    // A range the server refused (e.g. over a year): drop it, so the next action loads the default month again.
+    view.from = '';
+    view.to = '';
+    throw err;
+  }
+  tools = d.tools;
+  view.from = d.range.from;
+  view.to = d.range.to;
+  $('range-from').value = view.from;
+  $('range-to').value = view.to;
+  $('usage-csv').href = `/api/usage.csv?${rangeQuery()}`;
+  const over = d.projects.filter((p) => p.crossed).length;
+  $('status').textContent = d.connections.length
+    ? `${d.month}: ${usd(d.totalUsd)} so far this month across ${d.connections.length} connection(s)` + (over ? ` · ${over} project(s) over budget` : '')
+    : 'Connect a tool below to start tracking spend.';
+  onboarding(d.onboarding);
+  pricing(d.billing);
+  charts(d);
+  $('tools').innerHTML = '<tr><th>Tool</th><th class="num">Selected range</th><th class="num">This month</th></tr>' + d.tools.filter((t) => t.connected || t.rangeUsd || t.monthUsd)
+    .map((t) => `<tr><td>${esc(t.label)}</td><td class="num">${usd(t.rangeUsd)}</td><td class="num">${usd(t.monthUsd)}</td></tr>`).join('');
+  $('projects').innerHTML = '<tr><th>Project</th><th class="num">Spend</th><th class="num">Budget</th><th class="num">Used</th><th>Alerts to</th></tr>'
+    + (d.projects.length ? '' : '<tr><td colspan="5" class="muted soft">No projects yet. Connect a tool and give its project a budget.</td></tr>') + d.projects.map((p) => {
+    const cls = p.crossed ? 'over' : p.threshold ? 'warn' : '';
+    const to = [p.email && esc(p.email), p.hasSlack && 'Slack'].filter(Boolean).join(' + ') || '<span class="muted">none</span>';
+    return `<tr><td>${esc(p.name)}</td><td class="num">${usd(p.spend)}</td><td class="num">${p.budget ? usd(p.budget) : '<span class="muted">no budget</span>'}</td>`
+      + `<td class="num ${cls}">${p.pct === null ? '' : `${Math.round(p.pct)}%`}</td><td class="wrap">${to}</td></tr>`;
+  }).join('');
+  const label = (tool) => tools.find((t) => t.tool === tool)?.label ?? tool;
+  $('connections').innerHTML = '<tr><th>Tool</th><th>Project</th><th>Last sync</th><th></th></tr>' + d.connections.map((c) => `<tr>
+    <td class="soft">${esc(label(c.tool))}${c.org ? ` (${esc(c.org)})` : ''}</td><td>${esc(c.project)}</td>
+    <td class="soft">${c.lastError ? `<span class="over">${esc(c.lastError)}</span>` : c.lastSyncAt ? esc(new Date(c.lastSyncAt).toLocaleString()) : '<span class="muted">never</span>'}</td>
+    <td><button data-move="${esc(c.id)}">Move</button> <button data-remove="${esc(c.id)}">Remove</button></td></tr>`).join('');
+  if (!$('tool').options.length) {
+    $('tool').innerHTML = tools.map((t) => `<option value="${esc(t.tool)}">${esc(t.label)}</option>`).join('');
+    toolChanged();
+  }
+  const bq = new URLSearchParams(rangeQuery());
+  if (view.project) bq.set('project', view.project);
+  branches(await api('GET', `/api/branches?${bq}`));
+}
+
+function toolChanged() {
+  const t = tools.find((x) => x.tool === $('tool').value);
+  $('org').hidden = !t?.needsOrg;
+  $('org').required = !!t?.needsOrg;
+  $('tool-help').textContent = HELP[t?.tool] ?? '';
+}
+$('tool').onchange = toolChanged;
+
+$('range-apply').onclick = run(() => {
+  const from = $('range-from').value;
+  const to = $('range-to').value;
+  if (from && to && from > to) throw new Error('"From" must be on or before "To".');
+  view.from = from;
+  view.to = to;
+});
+for (const b of document.querySelectorAll('[data-preset]')) {
+  b.onclick = run(() => {
+    const now = new Date();
+    const y = now.getUTCFullYear();
+    const m = now.getUTCMonth();
+    if (b.dataset.preset === 'month') { view.from = iso(Date.UTC(y, m, 1)); view.to = iso(Date.UTC(y, m + 1, 0)); }
+    if (b.dataset.preset === 'last30') { view.to = iso(now); view.from = iso(now.getTime() - 29 * DAY); }
+    if (b.dataset.preset === 'lastmonth') { view.from = iso(Date.UTC(y, m - 1, 1)); view.to = iso(Date.UTC(y, m, 0)); }
+  });
+}
+$('branch-project').onchange = run(() => { view.project = $('branch-project').value; });
+$('branches-delete').onclick = run(async () => {
+  if (view.project && confirm(`Delete all branch data for ${view.project}?`)) {
+    await api('DELETE', `/api/branches?project=${encodeURIComponent(view.project)}`);
+    view.project = '';
+  }
+});
+$('connections').onclick = run(async (e) => {
+  const { move, remove } = e.target.dataset;
+  if (remove && confirm('Remove this connection? Its stored key and synced usage are deleted.')) await api('DELETE', `/api/connections/${encodeURIComponent(remove)}`);
+  if (move) {
+    const project = prompt('Move to project (repo name or tag):');
+    if (project) await api('PATCH', `/api/connections/${encodeURIComponent(move)}`, { project });
+  }
+});
+$('connect').onsubmit = run(async (e) => {
+  const f = e.target;
+  await api('POST', '/api/connections', { tool: f.tool.value, apiKey: f.apiKey.value, project: f.project.value, org: f.org.value || undefined });
+  f.apiKey.value = '';
+});
+$('budget').onsubmit = run(async (e) => {
+  const f = e.target;
+  const body = { project: f.project.value, monthlyUsd: Number(f.monthlyUsd.value), email: f.email.value };
+  if (f.removeSlack.checked) body.slackWebhookUrl = '';
+  else if (f.slackWebhookUrl.value) body.slackWebhookUrl = f.slackWebhookUrl.value;
+  await api('POST', '/api/budget', body);
+  f.slackWebhookUrl.value = '';
+  f.removeSlack.checked = false;
+});
+$('sync').onclick = run(async () => {
+  const r = await api('POST', '/api/sync');
+  const problems = [...r.errors.map((x) => `${x.tool}: ${x.error}`), ...r.failed.map((x) => `${x.channel} alert for ${x.project}: ${x.error}`)];
+  if (problems.length) alert(problems.join('\n'));
+});
+load().catch((err) => { $('status').textContent = err.message; });
 </script>
