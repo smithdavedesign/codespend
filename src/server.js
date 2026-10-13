@@ -3,6 +3,7 @@ import { createStore } from './store.js';
 import { createMailer } from './mailer.js';
 import { isSlackWebhookUrl } from './slack.js';
 import { DEFAULT_SYNC_INTERVAL_MS } from './sync.js';
+import { siteOrigin, vercelEnv } from './site.js';
 import { mkdirSync } from 'node:fs';
 
 mkdirSync('data', { recursive: true });
@@ -19,4 +20,7 @@ createApp({
   // Public Stripe links (not secrets): the $9/month payment link and the customer-portal login link.
   billing: { paymentLink: process.env.STRIPE_PAYMENT_LINK, portalLink: process.env.STRIPE_PORTAL_LINK },
   contactEmail: process.env.CONTACT_EMAIL,
+  // Canonical and share URLs point at the public site; the RepoHQ beacon stays silent unless this is Vercel production.
+  siteUrl: siteOrigin(process.env),
+  vercelEnv: vercelEnv(process.env),
 }).listen(port, '127.0.0.1', () => console.log(`CodeSpend on http://127.0.0.1:${port} (syncing every ${DEFAULT_SYNC_INTERVAL_MS / 60_000} min)`));

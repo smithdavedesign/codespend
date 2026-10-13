@@ -1,7 +1,8 @@
 <!doctype html>
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CodeSpend</title>
+<!--HEAD-->
 <style>
 [hidden]{display:none !important} /* buttons, .btn and .grid set display, which would otherwise beat the hidden attribute */
 body{font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Liberation Sans",sans-serif;max-width:900px;margin:0 auto;padding:1rem;color:#222}
@@ -36,7 +37,7 @@ svg.mini{height:56px;margin-top:.4rem}
 #onboarding li.done::marker{content:"✓  ";color:#15803d}
 .range{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem .4rem}
 .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.8rem}
-.plan h3{margin:.2rem 0}.price{font-size:1.6rem;font-weight:600;margin:.2rem 0}.price span{font-size:.9rem;font-weight:400;color:#555}
+.plan h3{margin:.2rem 0}.price{font-size:1.6rem;font-weight:600;margin:.2rem 0}.price span:not(#price){font-size:.9rem;font-weight:400;color:#555}
 .plan.pro{border-color:#1d4ed8}
 pre{background:#f6f6f6;padding:.6rem;border-radius:6px;overflow-x:auto;font-size:.85rem}
 footer{margin:2rem 0 1rem;border-top:1px solid #eee;padding-top:.6rem;font-size:.9rem}
@@ -152,7 +153,7 @@ Keys and webhooks are encrypted on this server and never shown again. "Remove" d
       <h3>Pro</h3>
       <p class="price"><span id="price">$9</span><span>/month per workspace</span></p>
       <ul><li>Claude, OpenAI, Copilot and Cursor</li><li>Email and Slack alerts</li><li>Spend per git branch</li><li>CSV export and date ranges</li></ul>
-      <a id="upgrade" class="btn primary" hidden>Upgrade with Stripe</a>
+      <a id="upgrade" class="btn primary" data-buy hidden>Get Pro · $9/month</a>
       <a id="manage" hidden>Manage or cancel subscription</a>
       <p class="muted" id="pay-note" hidden>Payments aren't set up on this server yet.</p>
     </div>
@@ -240,6 +241,7 @@ function onboarding(o) {
 
 function pricing(b) {
   $('price').textContent = `$${b.priceUsd}`;
+  $('upgrade').textContent = `Get Pro · $${b.priceUsd}/month`;
   $('upgrade').hidden = !b.paymentLink;
   if (b.paymentLink) $('upgrade').href = b.paymentLink;
   $('manage').hidden = !b.portalLink;
@@ -372,6 +374,7 @@ $('budget').onsubmit = run(async (e) => {
 });
 $('sync').onclick = run(async () => {
   const r = await api('POST', '/api/sync');
+  window.repohq?.signal('activate'); // the core action; the beacon sends it once per browser, on Vercel production only
   const problems = [...r.errors.map((x) => `${x.tool}: ${x.error}`), ...r.failed.map((x) => `${x.channel} alert for ${x.project}: ${x.error}`)];
   if (problems.length) alert(problems.join('\n'));
 });
