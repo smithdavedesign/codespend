@@ -51,7 +51,7 @@ This is not a Next.js app (it's a zero-dependency Node server), so Next's conven
    - It appears in the landing page's hero and pricing card, and in the dashboard's pricing card.
    - Without a valid `https://buy.stripe.com/…` link, the button isn't rendered at all. The landing page then says "Checkout isn't open yet", and the dashboard keeps its M3 note.
    - No link or key is hard-coded. I kept M3's rule that only `buy.stripe.com` links are accepted, so the screenshot run uses a placeholder on that host rather than `example.com`.
-4. **Visit beacon** (`public/beacon.js`, loaded on every page). It POSTs `{"slug":"codespend","kind":…,"referrer":…}` as JSON to `https://repohq.vercel.app/api/ideas/signal`:
+4. **Visit beacon** (`public/beacon.js`, loaded on every page). It POSTs `{"slug":"codespend","kind":…,"referrer":…}` as JSON to `https://idea-factory.1426davejobs.workers.dev/api/ideas/signal`:
    - fire-and-forget, with `keepalive`, `credentials: 'omit'` and `referrerPolicy: 'no-referrer'`, so the page URL never leaves the browser;
    - **visit:** once per browser session (sessionStorage), on every page;
    - **activate:** once per browser (localStorage). **The core action is a successful "Sync now" in the dashboard**: it pulls each connected tool's spend and checks every project against its budget;
