@@ -7,7 +7,7 @@
 // Silent for automated browsers (navigator.webdriver), anywhere but Vercel production (data-env on this script tag)
 // and when localStorage "repohq:notrack" is set.
 (() => {
-  const ENDPOINT = 'https://repohq.vercel.app/api/ideas/signal';
+  const ENDPOINT = 'https://idea-factory.1426davejobs.workers.dev/api/ideas/signal';
   const SLUG = 'codespend';
   const env = document.currentScript?.dataset.env;
   const ONCE = { visit: () => sessionStorage, activate: () => localStorage };

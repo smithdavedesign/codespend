@@ -150,7 +150,7 @@ test('the public origin comes from SITE_URL, then Vercel\'s production domain, t
 test('the privacy page names the three events and the terms carry the price, the refund line and no warranty; contact is GitHub issues', () => {
   const { read } = build();
   const privacy = read('privacy.html');
-  for (const words of [/<strong>visit<\/strong>/, /<strong>activate<\/strong>/, /<strong>checkout<\/strong>/, /sets no cookies/, /repohq\.vercel\.app/, /referrer/]) assert.match(privacy, words);
+  for (const words of [/<strong>visit<\/strong>/, /<strong>activate<\/strong>/, /<strong>checkout<\/strong>/, /sets no cookies/, /idea-factory\.1426davejobs\.workers\.dev/, /referrer/]) assert.match(privacy, words);
   const terms = read('terms.html');
   for (const words of [/\$9 per month per workspace/, /first 30 days, ask for a refund/, /without warranty/, /Cancel any time/]) assert.match(terms, words);
   for (const html of [privacy, terms]) assert.match(html, /href="https:\/\/github.com\/smithdavedesign\/codespend\/issues"/);
@@ -232,7 +232,7 @@ test('the dashboard\'s Get Pro button stays hidden without STRIPE_PAYMENT_LINK a
 // ---------- the RepoHQ beacon, run in a sandboxed fake browser ----------
 
 const BEACON = readFileSync(new URL('public/beacon.js', ROOT), 'utf8');
-const ENDPOINT = 'https://repohq.vercel.app/api/ideas/signal';
+const ENDPOINT = 'https://idea-factory.1426davejobs.workers.dev/api/ideas/signal';
 
 function storage(entries = {}) {
   const m = new Map(Object.entries(entries));
