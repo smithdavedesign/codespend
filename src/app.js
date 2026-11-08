@@ -52,7 +52,8 @@ function csvCell(v) {
 const csv = (header, rows) => [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
 const download = (name, body) => ({ code: 200, type: 'text/csv; charset=utf-8', headers: { 'content-disposition': `attachment; filename="${name}"` }, body });
 
-// siteUrl: the public site's origin, for canonical and share URLs. vercelEnv: VERCEL_ENV; the beacon only sends on "production".
+// siteUrl: the public site's origin, for canonical and share URLs. vercelEnv: deployEnv() (VERCEL_ENV, or
+// NEXT_PUBLIC_DEPLOY_ENV); the beacon only sends on "production".
 export function createApp({ store, mailer, slack, fetch = globalThis.fetch, now = () => new Date(), defaultSlackWebhookUrl = null, syncIntervalMs = 0, billing = {}, contactEmail = null, siteUrl = DEFAULT_SITE_URL, vercelEnv = '' }) {
   const syncer = createSyncer({ store, mailer, slack: slack ?? createSlack({ fetch }), fetch, now, defaultSlackWebhookUrl });
   const month = () => now().toISOString().slice(0, 7);

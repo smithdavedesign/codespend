@@ -33,7 +33,7 @@ This is not a Next.js app (it's a zero-dependency Node server), so Next's conven
    - a canonical URL;
    - SoftwareApplication JSON-LD with an Offer of $9.00 USD, billed monthly (`billingDuration P1M`, `unitCode MON`).
 
-   The origin is `SITE_URL`, then Vercel's `VERCEL_PROJECT_PRODUCTION_URL`, then `https://codespend.vercel.app`. A preview build therefore still points canonical URLs at production.
+   The origin is `SITE_URL`, then Vercel's `VERCEL_PROJECT_PRODUCTION_URL`, then `https://codespend.1426davejobs.workers.dev` (the Cloudflare Worker, production since 2026-11-08; it was `https://codespend.vercel.app`). A preview build therefore still points canonical URLs at production.
 2. **Privacy and terms.**
    - **Privacy:**
      - the website sets no cookies and collects nothing beyond the three beacon events, named with exactly what each carries;
