@@ -1,0 +1,16 @@
+// CodeSpend's public site on Cloudflare Workers (free plan): static assets only, no Worker code, so the dashboard's
+// API can't be reached here either (see LAUNCH-READY.md). `npm run cf:build` writes site/ (the same pages Vercel
+// served) plus site/_headers with vercel.json's headers. Vercel ignores this file. Deploy with the credential broker,
+// which injects the token:
+//   provision cloudflare deploy codespend <this checkout>
+{
+  "name": "codespend",
+  "compatibility_date": "2026-10-15",
+  "assets": {
+    "directory": "site",
+    // /privacy → privacy.html, like Vercel's cleanUrls.
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
+  "workers_dev": true
+}

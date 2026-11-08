@@ -1,5 +1,17 @@
 # CodeSpend — budget alerts and spend visibility for coding agents
 
+## Live
+
+**https://codespend.1426davejobs.workers.dev**
+
+The public site (landing page, privacy, terms) runs on a Cloudflare Worker, static assets on the free plan, since 2026-11-08: Vercel's account is blocked, so codespend.vercel.app answers 402. The dashboard stays self-hosted. These screenshots are of the live Worker, taken with Playwright in Chrome.
+
+| | Desktop (1440×900) | Phone (390×844) |
+|---|---|---|
+| The landing page: what CodeSpend does, with the dashboard on sample data | <img src="docs/screenshots/live-home-desktop.png" alt="The landing page: what CodeSpend does, with the dashboard on sample data, desktop" width="520"> | <img src="docs/screenshots/live-home-phone.png" alt="The landing page: what CodeSpend does, with the dashboard on sample data, phone" width="200"> |
+| Pricing: Free, and Pro at $9/month (checkout isn't open yet: no payment link is stored) | <img src="docs/screenshots/live-pricing-desktop.png" alt="Pricing: Free, and Pro at $9/month (checkout isn't open yet: no payment link is stored), desktop" width="520"> | <img src="docs/screenshots/live-pricing-phone.png" alt="Pricing: Free, and Pro at $9/month (checkout isn't open yet: no payment link is stored), phone" width="200"> |
+| The privacy page, which names the three anonymous visit events | <img src="docs/screenshots/live-privacy-desktop.png" alt="The privacy page, which names the three anonymous visit events, desktop" width="520"> | <img src="docs/screenshots/live-privacy-phone.png" alt="The privacy page, which names the three anonymous visit events, phone" width="200"> |
+
 ## Screenshots
 
 ![Public start page with the Get Pro button, desktop](docs/screenshots/home-desktop.png)
@@ -118,3 +130,21 @@ Every page loads `public/beacon.js`. On the Vercel production deployment only, i
 Effort: Medium · Confidence: Medium
 
 _Researched by the idea pipeline on 2026-10-11 ([original record](https://github.com/smithdavedesign/idea-factory/tree/main/ideas/codespend)); repo created on David's go-ahead 2026-10-11._
+
+## Hosting on Cloudflare Workers
+
+Since 2026-11-08 the public site is served by the `codespend` Worker on Cloudflare (free plan): static assets only,
+no Worker code, so the dashboard's API can't be reached there, exactly as on Vercel. `wrangler.jsonc` serves `site/`
+with `html_handling: auto-trailing-slash` (`/privacy` → `privacy.html`, like Vercel's `cleanUrls`). Vercel ignores
+`wrangler.jsonc`, so both hosts build from the same code.
+
+```bash
+npm run cf:build                                  # site/ plus site/_headers (vercel.json's headers), counted as production
+provision cloudflare deploy codespend "$PWD"      # deploy with the credential broker (token from the keychain)
+provision cloudflare url codespend                # https://codespend.1426davejobs.workers.dev
+```
+
+`cf:build` sets `NEXT_PUBLIC_DEPLOY_ENV=production`, so the visit beacon counts the Worker's visitors (`deployEnv()` in
+`src/site.js`; on Vercel it reads `VERCEL_ENV`). Canonical and share URLs default to the Worker's address; set
+`SITE_URL` to pin a custom domain. `STRIPE_PAYMENT_LINK` and `CONTACT_EMAIL` are read at build time: none is stored for
+codespend, so Get Pro stays hidden ("Checkout isn't open yet").

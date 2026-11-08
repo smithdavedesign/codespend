@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { inflateSync } from 'node:zlib';
 import vm from 'node:vm';
 import { createStore } from '../src/store.js';
-import { buildSite, siteOrigin, vercelEnv, paymentLink, PAGES, PUBLIC_PAGES, DEFAULT_SITE_URL } from '../src/site.js';
+import { buildSite, siteOrigin, deployEnv, headersFile, paymentLink, PAGES, PUBLIC_PAGES, DEFAULT_SITE_URL } from '../src/site.js';
 import { ogImagePng, crc32, OG_WIDTH, OG_HEIGHT } from '../src/og-image.js';
 import { fakeVendors, fakeMailer, startApp, tmpFile } from './helpers.js';
 import { tmpDir } from './repo-fixture.js';
@@ -131,20 +131,25 @@ test('the Get Pro button is hidden without STRIPE_PAYMENT_LINK, shown with a Str
   for (const f of ['privacy.html', 'terms.html']) assert.equal(withLink.read(f).includes('data-buy'), false, f);
 });
 
-test('the public origin comes from SITE_URL, then Vercel\'s production domain, then the default; VERCEL_ENV reaches the beacon tag', () => {
+test('the public origin comes from SITE_URL, then Vercel\'s production domain, then the default; the deploy env reaches the beacon tag', () => {
   assert.equal(siteOrigin({}), DEFAULT_SITE_URL);
+  assert.equal(DEFAULT_SITE_URL, 'https://codespend.1426davejobs.workers.dev', 'the Cloudflare Worker is production');
   assert.equal(siteOrigin({ SITE_URL: 'https://spend.example.com/some/path/' }), 'https://spend.example.com');
   assert.equal(siteOrigin({ VERCEL_PROJECT_PRODUCTION_URL: 'codespend-team.vercel.app' }), 'https://codespend-team.vercel.app');
   assert.equal(siteOrigin({ SITE_URL: 'https://a.example', VERCEL_PROJECT_PRODUCTION_URL: 'b.vercel.app' }), 'https://a.example');
   for (const bad of ['http://plain.example', 'not a url', 'javascript:alert(1)', ['https://u', 'p@x.example'].join(':')]) assert.equal(siteOrigin({ SITE_URL: bad }), DEFAULT_SITE_URL, bad);
 
-  assert.equal(vercelEnv({}), '');
-  assert.equal(vercelEnv({ VERCEL_ENV: 'production' }), 'production');
-  assert.equal(vercelEnv({ NEXT_PUBLIC_VERCEL_ENV: 'preview' }), 'preview');
+  assert.equal(deployEnv({}), '');
+  assert.equal(deployEnv({ VERCEL_ENV: 'production' }), 'production');
+  assert.equal(deployEnv({ NEXT_PUBLIC_VERCEL_ENV: 'preview' }), 'preview');
+  assert.equal(deployEnv({ NEXT_PUBLIC_DEPLOY_ENV: 'production' }), 'production', 'the Cloudflare build');
+  assert.equal(deployEnv({ NEXT_PUBLIC_DEPLOY_ENV: 'production', VERCEL_ENV: 'preview' }), 'production');
   for (const env of ['production', 'preview']) {
     const { read } = build({ VERCEL_ENV: env });
     for (const key of PUBLIC_PAGES) assert.match(read(PAGES[key].out), new RegExp(`<script src="/beacon.js" data-env="${env}" defer>`), `${key} ${env}`);
   }
+  const worker = build({ NEXT_PUBLIC_DEPLOY_ENV: 'production' });
+  for (const key of PUBLIC_PAGES) assert.match(worker.read(PAGES[key].out), /<script src="\/beacon.js" data-env="production" defer>/, `${key} on the Worker`);
 });
 
 test('the privacy page names the three events and the terms carry the price, the refund line and no warranty; contact is GitHub issues', () => {
@@ -295,7 +300,7 @@ test('beacon: "activate" once per browser, "checkout" on every Get Pro click and
   assert.deepEqual(later.kinds(), ['visit'], 'activate already sent from this browser');
 });
 
-test('beacon: silent for automated browsers, outside Vercel production, with repohq:notrack, or when storage is blocked', () => {
+test('beacon: silent for automated browsers, outside production, with repohq:notrack, or when storage is blocked', () => {
   const cases = {
     webdriver: { webdriver: true },
     preview: { env: 'preview' },
@@ -323,15 +328,32 @@ test('beacon: a failing network never breaks the page', async () => {
 
 // ---------- deployment files ----------
 
-test('Vercel builds the static site, and .provision asks for the project and the Stripe link', () => {
+test('Vercel builds the static site', () => {
   const vercel = JSON.parse(readFileSync(new URL('vercel.json', ROOT), 'utf8'));
   assert.equal(vercel.buildCommand, 'npm run build');
   assert.equal(vercel.outputDirectory, 'site');
   assert.equal(vercel.cleanUrls, true);
   const pkg = JSON.parse(readFileSync(new URL('package.json', ROOT), 'utf8'));
   assert.equal(pkg.scripts.build, 'node scripts/build-site.mjs');
-  assert.deepEqual(readFileSync(new URL('.provision', ROOT), 'utf8').trim().split('\n'), [
-    'vercel project codespend',
-    'request "Stripe payment link for codespend: $9/month, per REVENUE.md"',
-  ]);
+});
+
+// wrangler.jsonc → JSON: drop // comments (none of its strings hold "//") and trailing commas.
+const wrangler = () => JSON.parse(readFileSync(new URL('wrangler.jsonc', ROOT), 'utf8').replace(/^\s*\/\/.*$/gm, '').replace(/,(\s*[}\]])/g, '$1'));
+
+test('the Cloudflare Worker serves the same static site, counted as production, with no Worker code and no build step', () => {
+  const w = wrangler();
+  assert.equal(w.name, 'codespend', 'the Worker is named after the repo (provision cloudflare deploy)');
+  assert.equal(w.main, undefined, 'static assets only: the dashboard API is never deployed');
+  assert.equal(w.build, undefined, 'the broker runs no build command');
+  assert.equal(w.assets.directory, 'site');
+  assert.equal(w.assets.html_handling, 'auto-trailing-slash', '/privacy serves privacy.html, like cleanUrls');
+  const pkg = JSON.parse(readFileSync(new URL('package.json', ROOT), 'utf8'));
+  assert.equal(pkg.scripts['cf:build'], 'NEXT_PUBLIC_DEPLOY_ENV=production node scripts/build-site.mjs --cloudflare');
+});
+
+test('the Worker sends vercel.json\'s headers through _headers', () => {
+  const vercel = JSON.parse(readFileSync(new URL('vercel.json', ROOT), 'utf8'));
+  assert.equal(headersFile(vercel), '/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n');
+  assert.equal(headersFile({ headers: [{ source: '/thanks', headers: [{ key: 'X-Robots-Tag', value: 'noindex' }] }] }), '/thanks\n  X-Robots-Tag: noindex\n');
+  assert.throws(() => headersFile({ headers: [{ source: '/blog/:slug(.*)', headers: [] }] }), /no _headers equivalent/);
 });

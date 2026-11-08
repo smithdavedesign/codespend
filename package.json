@@ -10,6 +10,7 @@
     "test": "node --test test/*.test.js",
     "start": "node src/server.js",
     "build": "node scripts/build-site.mjs",
+    "cf:build": "NEXT_PUBLIC_DEPLOY_ENV=production node scripts/build-site.mjs --cloudflare",
     "branches": "node bin/codespend-branches.mjs",
     "screenshots": "node scripts/screenshots.mjs"
   },

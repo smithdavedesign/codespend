@@ -374,7 +374,7 @@ $('budget').onsubmit = run(async (e) => {
 });
 $('sync').onclick = run(async () => {
   const r = await api('POST', '/api/sync');
-  window.repohq?.signal('activate'); // the core action; the beacon sends it once per browser, on Vercel production only
+  window.repohq?.signal('activate'); // the core action; the beacon sends it once per browser, on production only
   const problems = [...r.errors.map((x) => `${x.tool}: ${x.error}`), ...r.failed.map((x) => `${x.channel} alert for ${x.project}: ${x.error}`)];
   if (problems.length) alert(problems.join('\n'));
 });

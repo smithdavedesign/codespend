@@ -14,7 +14,8 @@ import { ogImagePng, OG_WIDTH, OG_HEIGHT } from './og-image.js';
 
 export const PRICE_USD = 9; // REVENUE.md: $9/month per workspace
 export const REPO_URL = 'https://github.com/smithdavedesign/codespend';
-export const DEFAULT_SITE_URL = 'https://codespend.vercel.app';
+// The public site's production address: the Cloudflare Worker since 2026-11-08 (Vercel's account is blocked).
+export const DEFAULT_SITE_URL = 'https://codespend.1426davejobs.workers.dev';
 export const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const PUBLIC = new URL('../public/', import.meta.url);
 const DASHBOARD_PICTURE = new URL('dashboard.png', PUBLIC); // the landing page's picture, made by `npm run screenshots`
@@ -57,15 +58,17 @@ function httpsOrigin(v) {
 }
 
 // SITE_URL wins; on Vercel the project's production domain is next, so a preview build still points canonical URLs
-// at production.
+// at production; anywhere else (the Cloudflare build) it's the default, the Worker's address.
 export function siteOrigin(env = {}) {
   return httpsOrigin(env.SITE_URL)
     ?? (env.VERCEL_PROJECT_PRODUCTION_URL ? httpsOrigin(`https://${env.VERCEL_PROJECT_PRODUCTION_URL}`) : null)
     ?? DEFAULT_SITE_URL;
 }
 
-// "production", "preview" or "development" on Vercel; empty anywhere else, which keeps the beacon silent.
-export const vercelEnv = (env = {}) => env.VERCEL_ENV || env.NEXT_PUBLIC_VERCEL_ENV || '';
+// Which deployment this build is, on either host: the Cloudflare build sets NEXT_PUBLIC_DEPLOY_ENV=production
+// (`npm run cf:build`); Vercel sets VERCEL_ENV ("production", "preview" or "development"). Empty anywhere else,
+// which keeps the beacon silent.
+export const deployEnv = (env = {}) => env.NEXT_PUBLIC_DEPLOY_ENV || env.VERCEL_ENV || env.NEXT_PUBLIC_VERCEL_ENV || '';
 
 // Stripe Checkout payment links and customer-portal links only: anything else is dropped, never rendered.
 export function stripeLink(v, host) {
@@ -153,7 +156,7 @@ function buyHtml(where, link) {
   return where === 'pricing' ? '<p class="muted">Checkout isn\'t open yet. Watch the GitHub repository to hear when it is.</p>' : '';
 }
 
-// opts: {origin, env (VERCEL_ENV), paymentLink, contact (HTML)}. Function replacers, so "$&" in a value stays literal.
+// opts: {origin, env (deployEnv), paymentLink, contact (HTML)}. Function replacers, so "$&" in a value stays literal.
 export function renderPage(key, { origin = DEFAULT_SITE_URL, env = '', paymentLink: link = null, contact = contactHtml(null) } = {}) {
   return readFileSync(new URL(PAGES[key].file, PUBLIC), 'utf8')
     .replace('<!--HEAD-->', () => renderHead(key, { origin, env }))
@@ -174,7 +177,7 @@ export function sitemapXml(origin) {
 export function buildSite(outDir, env = {}) {
   const origin = siteOrigin(env);
   const link = paymentLink(env);
-  const opts = { origin, env: vercelEnv(env), paymentLink: link, contact: contactHtml(env.CONTACT_EMAIL) };
+  const opts = { origin, env: deployEnv(env), paymentLink: link, contact: contactHtml(env.CONTACT_EMAIL) };
   mkdirSync(outDir, { recursive: true });
   const files = {};
   for (const key of PUBLIC_PAGES) files[PAGES[key].out] = renderPage(key, opts);
@@ -182,4 +185,14 @@ export function buildSite(outDir, env = {}) {
   for (const [name, body] of Object.entries(files)) writeFileSync(join(outDir, name), body);
   copyFileSync(DASHBOARD_PICTURE, join(outDir, 'dashboard.png'));
   return { origin, hasPaymentLink: !!link, env: opts.env, files: [...Object.keys(files), 'dashboard.png'] };
+}
+
+// Cloudflare's _headers file (Workers static assets) with vercel.json's response headers, so both hosts send the same
+// ones. Vercel's catch-all source "/(.*)" becomes "/*"; any other source must be a plain path.
+export function headersFile(vercel) {
+  return (vercel.headers || []).map(({ source, headers }) => {
+    const path = source === '/(.*)' ? '/*' : source;
+    if (!/^\/[\w./*-]*$/.test(path)) throw new Error(`vercel.json header source ${source} has no _headers equivalent`);
+    return [path, ...headers.map(({ key, value }) => `  ${key}: ${value}`)].join('\n');
+  }).join('\n') + '\n';
 }

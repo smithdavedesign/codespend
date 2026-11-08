@@ -4,7 +4,8 @@
 //   checkout – every click on a Get Pro button ([data-buy])
 // Each POST carries only {slug, kind, referrer}. The referrer is sent only when it is another site, and the request
 // itself sends no referrer and no cookies, so this page's URL never leaves the browser.
-// Silent for automated browsers (navigator.webdriver), anywhere but Vercel production (data-env on this script tag)
+// Silent for automated browsers (navigator.webdriver), anywhere but production (data-env on this script tag: Vercel's
+// VERCEL_ENV, or NEXT_PUBLIC_DEPLOY_ENV=production from `npm run cf:build` for the Cloudflare Worker)
 // and when localStorage "repohq:notrack" is set.
 (() => {
   const ENDPOINT = 'https://idea-factory.1426davejobs.workers.dev/api/ideas/signal';

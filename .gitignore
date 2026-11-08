@@ -4,3 +4,5 @@ site/
 .vercel/
 # Local data: the store (encrypted keys), its generated secret.key and the email outbox.
 data/
+# Cloudflare: wrangler's local state.
+.wrangler/
