@@ -8,9 +8,9 @@ The public site (landing page, privacy, terms) runs on a Cloudflare Worker, stat
 
 | | Desktop (1440×900) | Phone (390×844) |
 |---|---|---|
-| The landing page: what CodeSpend does, with the dashboard on sample data | <img src="docs/screenshots/live-home-desktop.png" alt="The landing page: what CodeSpend does, with the dashboard on sample data, desktop" width="520"> | <img src="docs/screenshots/live-home-phone.png" alt="The landing page: what CodeSpend does, with the dashboard on sample data, phone" width="200"> |
-| Pricing: Free, and Pro at $9/month (checkout isn't open yet: no payment link is stored) | <img src="docs/screenshots/live-pricing-desktop.png" alt="Pricing: Free, and Pro at $9/month (checkout isn't open yet: no payment link is stored), desktop" width="520"> | <img src="docs/screenshots/live-pricing-phone.png" alt="Pricing: Free, and Pro at $9/month (checkout isn't open yet: no payment link is stored), phone" width="200"> |
-| The privacy page, which names the three anonymous visit events | <img src="docs/screenshots/live-privacy-desktop.png" alt="The privacy page, which names the three anonymous visit events, desktop" width="520"> | <img src="docs/screenshots/live-privacy-phone.png" alt="The privacy page, which names the three anonymous visit events, phone" width="200"> |
+| The landing page: what CodeSpend does, with the dashboard on sample data | <img src="docs/screenshots/live/home-desktop.png" alt="The landing page: what CodeSpend does, with the dashboard on sample data, desktop" width="520"> | <img src="docs/screenshots/live/home-phone.png" alt="The landing page: what CodeSpend does, with the dashboard on sample data, phone" width="200"> |
+| Pricing: Free, and Pro at $9/month (checkout isn't open yet: no payment link is stored) | <img src="docs/screenshots/live/pricing-desktop.png" alt="Pricing: Free, and Pro at $9/month (checkout isn't open yet: no payment link is stored), desktop" width="520"> | <img src="docs/screenshots/live/pricing-phone.png" alt="Pricing: Free, and Pro at $9/month (checkout isn't open yet: no payment link is stored), phone" width="200"> |
+| The privacy page, which names the three anonymous visit events | <img src="docs/screenshots/live/privacy-desktop.png" alt="The privacy page, which names the three anonymous visit events, desktop" width="520"> | <img src="docs/screenshots/live/privacy-phone.png" alt="The privacy page, which names the three anonymous visit events, phone" width="200"> |
 
 ## Screenshots
 

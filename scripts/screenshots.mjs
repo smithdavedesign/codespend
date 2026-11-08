@@ -6,7 +6,7 @@
 // built with the same code as `npm run build` into a temporary folder and served locally. Both get a placeholder
 // payment link so the Get Pro buttons show. The browser may only reach 127.0.0.1.
 // Chromium is never downloaded: set CHROMIUM_PATH to an installed Chromium/Chrome.
-import { mkdirSync, rmSync, readFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { join, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -131,8 +131,10 @@ const api = async (method, path, body) => {
   return r.json();
 };
 
-rmSync(OUT, { recursive: true, force: true });
+// The script owns the PNGs directly in docs/screenshots/. docs/screenshots/live/ holds the screenshots of the deployed
+// site that the README shows first; they're taken against the live URL, so this run leaves them alone.
 mkdirSync(OUT, { recursive: true });
+for (const file of readdirSync(OUT)) if (file.endsWith('.png')) rmSync(join(OUT, file));
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
 try {
   const open = async (options) => {
